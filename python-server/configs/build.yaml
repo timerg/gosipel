@@ -1,0 +1,27 @@
+version: '2'
+distribution_spec:
+  description: Llama Stack with Ollama inference for local development
+  providers:
+    inference:
+    - remote::ollama
+    safety:
+    - inline::llama-guard
+    agents:
+    - inline::meta-reference
+    vector_io:
+    - inline::faiss
+    datasetio:
+    - inline::localfs
+    scoring:
+    - inline::basic
+    eval:
+    - inline::meta-reference
+    post_training:
+    - inline::torchtune
+    tool_runtime:
+    - inline::rag-runtime
+    telemetry:
+    - inline::meta-reference
+    files:
+    - inline::localfs
+image_type: venv

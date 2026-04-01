@@ -1,0 +1,21 @@
+
+# User files
+.service_state.json
+note.md
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.venv-build.yaml
+.venv-run.yaml
+
+# Indexing
+docs/.index_manifest.json
+
+# ai files
+.claude/
+
+# macOS files
+.DS_Store

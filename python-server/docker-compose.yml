@@ -1,0 +1,66 @@
+name: gosipel-llama
+
+services:
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+      - ./docker/ollama-entrypoint.sh:/ollama-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/ollama-entrypoint.sh"]
+    environment:
+      - OLLAMA_MODEL=llama3.2:3b
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list | grep 'llama3.2'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
+
+  llama-stack:
+    image: distribution-ollama:0.6.0
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "8321:8321"
+    volumes:
+      - llama-stack-data:/app/llama-stack-data
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - SQLITE_STORE_DIR=/app/llama-stack-data
+      - INFERENCE_MODEL=llama3.2:3b
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8321/v1/models"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 90s
+
+  python-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      llama-stack:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - service-state:/app/state
+    environment:
+      - SERVER_URL=http://llama-stack:8321
+      - STATE_DIR=/app/state
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  ollama-models:
+  llama-stack-data:
+  service-state:

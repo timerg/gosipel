@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "gosipel-llama-server"
+version = "0.1.0"
+description = "FastAPI service wrapping Llama Stack for chat with persistent sessions"
+authors = []
+readme = "Readme.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.135.1"
+uvicorn = "^0.42.0"
+llama-stack-client = "^0.2.12"
+fire = ">=0.4.0"
+requests = ">=2.28.0"
+mcp = "^1.26.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "llama-stack (==0.2.11)"
+]

@@ -1,0 +1,30 @@
+FROM python:3.10-slim
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+        iputils-ping net-tools iproute2 dnsutils telnet \
+        curl wget git \
+        procps psmisc lsof \
+        traceroute \
+        bubblewrap \
+        gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV UV_SYSTEM_PYTHON=1
+RUN pip install uv
+RUN uv pip install --no-cache \
+    scipy aiosqlite tqdm numpy ollama psycopg2-binary matplotlib \
+    opentelemetry-exporter-otlp-proto-http requests openai trl pypdf \
+    autoevals peft faiss-cpu nltk mcp opentelemetry-sdk redis transformers \
+    chardet aiohttp pythainlp langdetect torch pymongo tree_sitter datasets \
+    asyncpg chromadb-client pandas scikit-learn sentencepiece emoji pillow \
+    sqlalchemy[asyncio] aiosqlite fastapi fire httpx uvicorn \
+    opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+
+RUN mkdir -p /.llama/providers.d /.cache
+RUN uv pip install --no-cache llama-stack
+RUN pip uninstall -y uv
+
+RUN chmod -R g+rw /app /.llama /.cache
+
+ENTRYPOINT ["python", "-m", "llama_stack.distribution.server.server", "--template", "ollama"]

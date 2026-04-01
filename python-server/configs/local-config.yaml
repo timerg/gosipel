@@ -1,0 +1,112 @@
+version: '2'
+image_name: llamastack-NewLlamaStack
+container_image: null
+apis:
+- inference
+- safety
+- agents
+- vector_io
+- datasetio
+- scoring
+- eval
+- post_training
+- tool_runtime
+- telemetry
+- files
+providers:
+  inference:
+  - provider_id: ollama
+    provider_type: remote::ollama
+    config:
+      url: ${env.OLLAMA_URL:http://localhost:11434}
+  safety:
+  - provider_id: llama-guard
+    provider_type: inline::llama-guard
+    config:
+      excluded_categories: []
+  agents:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      persistence_store:
+        type: sqlite
+        namespace: null
+        db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/llamastack-NewLlamaStack}/agents_store.db
+      responses_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/llamastack-NewLlamaStack}/responses_store.db
+  vector_io:
+  - provider_id: faiss
+    provider_type: inline::faiss
+    config:
+      kvstore:
+        type: sqlite
+        namespace: null
+        db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/llamastack-NewLlamaStack}/faiss_store.db
+  datasetio:
+  - provider_id: localfs
+    provider_type: inline::localfs
+    config:
+      kvstore:
+        type: sqlite
+        namespace: null
+        db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/llamastack-NewLlamaStack}/localfs_datasetio.db
+  scoring:
+  - provider_id: basic
+    provider_type: inline::basic
+    config: {}
+  eval:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      kvstore:
+        type: sqlite
+        namespace: null
+        db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/llamastack-NewLlamaStack}/meta_reference_eval.db
+  post_training:
+  - provider_id: torchtune
+    provider_type: inline::torchtune
+    config:
+      checkpoint_format: meta
+  tool_runtime:
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
+    config: {}
+  telemetry:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      service_name: "${env.OTEL_SERVICE_NAME:\u200B}"
+      sinks: ${env.TELEMETRY_SINKS:console,sqlite}
+      sqlite_db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/llamastack-NewLlamaStack}/trace_store.db
+  files:
+  - provider_id: localfs
+    provider_type: inline::localfs
+    config:
+      storage_dir: ${env.FILES_STORAGE_DIR:~/.llama/distributions/llamastack-NewLlamaStack/files}
+      metadata_store:
+        type: sqlite
+        db_path: ${env.SQLITE_STORE_DIR:~/.llama/distributions/llamastack-NewLlamaStack}/files_metadata.db
+metadata_store: null
+inference_store: null
+models:
+  - metadata: {}
+    model_id: llama3.2:3b
+    provider_id: ollama
+    model_type: llm
+shields: []
+vector_dbs: []
+datasets: []
+scoring_fns: []
+benchmarks: []
+tool_groups: []
+logging: null
+server:
+  port: 8321
+  tls_certfile: null
+  tls_keyfile: null
+  tls_cafile: null
+  auth: null
+  host: null
+  quota: null
+external_providers_dir: /Users/TimerPro/.llama/providers.d
