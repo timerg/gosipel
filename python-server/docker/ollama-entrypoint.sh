@@ -11,6 +11,10 @@ done
 
 echo "Pulling model ${OLLAMA_MODEL}..."
 ollama pull ${OLLAMA_MODEL}
-echo "Model ready."
+
+echo "Pulling embedding model ${OLLAMA_EMBEDDING_MODEL}..."
+ollama pull ${OLLAMA_EMBEDDING_MODEL}
+
+echo "Models ready."
 
 wait $OLLAMA_PID

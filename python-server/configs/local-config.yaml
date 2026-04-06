@@ -94,6 +94,11 @@ models:
     model_id: llama3.2:3b
     provider_id: ollama
     model_type: llm
+  - metadata:
+      embedding_dimension: 384
+    model_id: all-minilm
+    provider_id: ollama
+    model_type: embedding
 shields: []
 vector_dbs: []
 datasets: []

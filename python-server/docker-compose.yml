@@ -12,6 +12,7 @@ services:
     entrypoint: ["/bin/sh", "/ollama-entrypoint.sh"]
     environment:
       - OLLAMA_MODEL=llama3.2:3b
+      - OLLAMA_EMBEDDING_MODEL=all-minilm
     healthcheck:
       test: ["CMD-SHELL", "ollama list | grep 'llama3.2'"]
       interval: 10s

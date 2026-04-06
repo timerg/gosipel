@@ -12,7 +12,7 @@ __pycache__/
 .venv-run.yaml
 
 # Indexing
-docs/.index_manifest.json
+docs/
 
 # ai files
 .claude/

@@ -14,10 +14,11 @@ A FastAPI service that wraps [Llama Stack](https://github.com/meta-llama/llama-s
 
 ## Local Development Setup
 
-### 1. Pull the model
+### 1. Pull the models
 
 ```bash
 ollama pull llama3.2:3b
+ollama pull all-minilm  # smaller embedding model (optional, but required if you want to store documents)
 ```
 
 ### 2. Set up Python and install dependencies

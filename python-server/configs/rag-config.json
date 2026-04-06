@@ -1,0 +1,10 @@
+{
+  "vector_db_id": "gosipel_docs",
+  "embedding_model": "all-minilm",
+  "embedding_dimension": 384,
+  "chunk_size": 200,
+  "chunk_overlap": 20,
+  "batch_size": 1,
+  "max_chunks": 5,
+  "score_threshold": 0.3
+}
