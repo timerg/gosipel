@@ -75,12 +75,12 @@ function parseSSEEvent(event: string): SSEEvent {
   return { data, stop_reason };
 }
 
-// Pure: parses the data payload — session_id events are JSON, content is plain text
-type SSEData = { session_id?: string; content: string };
+// Pure: parses the data payload — response_id events are JSON, content is plain text
+type SSEData = { response_id?: string; content: string };
 function parseSSEData(data: string): SSEData {
   try {
     const json = JSON.parse(data);
-    if (json.session_id) return { session_id: json.session_id, content: "" };
+    if (json.response_id) return { response_id: json.response_id, content: "" };
   } catch {}
   return { content: data };
 }
@@ -89,7 +89,7 @@ async function readStream(
   response: Response,
   messageId: number,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  setSessionId: React.Dispatch<React.SetStateAction<string | null>>,
+  setPreviousResponseId: React.Dispatch<React.SetStateAction<string | null>>,
 ) {
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
@@ -113,9 +113,9 @@ async function readStream(
 
       if (!data || data === "[DONE]") continue;
 
-      const { session_id, content } = parseSSEData(data);
-      if (session_id) {
-        setSessionId(session_id);
+      const { response_id, content } = parseSSEData(data);
+      if (response_id) {
+        setPreviousResponseId(response_id);
       } else {
         setMessages((prev) => MessageQueue.add(prev, { id: messageId, role: "assistant", content }));
       }
@@ -127,12 +127,12 @@ async function readJSON(
   response: Response,
   messageId: number,
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  setSessionId: React.Dispatch<React.SetStateAction<string | null>>,
+  setPreviousResponseId: React.Dispatch<React.SetStateAction<string | null>>,
 ) {
   const json = await response.json();
 
-  if (json.session_id) {
-    setSessionId(json.session_id);
+  if (json.response_id) {
+    setPreviousResponseId(json.response_id);
   }
 
   setMessages((prev) =>
@@ -145,7 +145,7 @@ export function useChat() {
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [streamMode, setStreamMode] = useState(true);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [previousResponseId, setPreviousResponseId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export function useChat() {
         body: JSON.stringify({
           messages: [userMsg],
           stream: streamMode,
-          ...(sessionId ? { session_id: sessionId } : {}),
+          ...(previousResponseId ? { previous_response_id: previousResponseId } : {}),
         }),
       });
 
@@ -179,9 +179,9 @@ export function useChat() {
       if (!response.body) throw new Error("No response body");
 
       if (streamMode) {
-        await readStream(response, assistantMsg.id, setMessages, setSessionId);
+        await readStream(response, assistantMsg.id, setMessages, setPreviousResponseId);
       } else {
-        await readJSON(response, assistantMsg.id, setMessages, setSessionId);
+        await readJSON(response, assistantMsg.id, setMessages, setPreviousResponseId);
       }
     } catch (err) {
       console.error("Chat error:", err);
@@ -198,7 +198,7 @@ export function useChat() {
   }
 
   function newSession() {
-    setSessionId(null);
+    setPreviousResponseId(null);
     setMessages(MessageQueue.make());
   }
 
