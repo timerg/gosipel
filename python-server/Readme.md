@@ -30,16 +30,17 @@ poetry install
 
 ### 3. Install Llama Stack server-side dependencies
 
-This step injects server-side packages (opentelemetry, faiss-cpu, torchtune, etc.) into the venv. **Must be re-run any time the venv is recreated.**
+This builds a separate `.llama-server` venv with all server-side packages (opentelemetry, faiss-cpu, torchtune, etc.). **Must be re-run any time the venv is recreated.**
 
 ```bash
-poetry run llama stack build --config configs/build.yaml --image-type venv
+poetry run pip install llama-stack  # ensures the llama CLI is available
+.venv/bin/llama stack build --config configs/build.yaml --image-type venv --image-name .llama-server
 ```
 
 ### 4. Start the Llama Stack server
 
 ```bash
-poetry run llama stack run configs/local-config.yaml
+.llama-server/bin/llama stack run configs/local-config.yaml
 ```
 
 The server starts on port `8321`.

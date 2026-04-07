@@ -10,6 +10,7 @@ __pycache__/
 .venv/
 .venv-build.yaml
 .venv-run.yaml
+.llama-server/
 
 # Indexing
 docs/
