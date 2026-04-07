@@ -1342,14 +1342,14 @@ ui = ["llama-stack-client (>=0.2.22)", "pandas", "streamlit", "streamlit-option-
 
 [[package]]
 name = "llama-stack-client"
-version = "0.2.23"
+version = "0.7.1"
 description = "The official Python library for the llama-stack-client API"
 optional = false
 python-versions = ">=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "llama_stack_client-0.2.23-py3-none-any.whl", hash = "sha256:eee42c74eee8f218f9455e5a06d5d4be43f8a8c82a7937ef51ce367f916df847"},
-    {file = "llama_stack_client-0.2.23.tar.gz", hash = "sha256:68f34e8ac8eea6a73ed9d4977d849992b2d8bd835804d770a11843431cd5bf74"},
+    {file = "llama_stack_client-0.7.1-py3-none-any.whl", hash = "sha256:5cd104779cb96ec1f8c66a8c0f581b096fcb384188ed891c72be31fb75022daa"},
+    {file = "llama_stack_client-0.7.1.tar.gz", hash = "sha256:90d8a90519cb3ef644bce4566c6a752184fd69b960c579b41886d70fe47cb44f"},
 ]
 
 [package.dependencies]
@@ -1367,10 +1367,10 @@ rich = "*"
 sniffio = "*"
 termcolor = "*"
 tqdm = "*"
-typing-extensions = ">=4.7,<5"
+typing-extensions = ">=4.14,<5"
 
 [package.extras]
-aiohttp = ["aiohttp", "httpx-aiohttp (>=0.1.8)"]
+aiohttp = ["aiohttp", "httpx-aiohttp (>=0.1.9)"]
 
 [[package]]
 name = "markdown-it-py"
@@ -3481,4 +3481,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "0bb5d1b17a215a86e7acd366bed3777a3dec46120a2257f66cc57b7df8d6bbed"
+content-hash = "ee9e14c4826d89d1e38722a0661d0729ad6c25e83a8e27e8261d8a0e334aba26"

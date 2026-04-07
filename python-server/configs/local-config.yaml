@@ -1,5 +1,6 @@
 version: 2
 distro_name: llamastack-NewLlamaStack
+image_name: .llama-server
 apis:
 - inference
 - safety

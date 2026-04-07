@@ -1,3 +1,5 @@
+PYTHON_VERSION = 3.12
+
 .PHONY: pull-models setup build-llama-server run-llama-server run-service
 
 pull-models:
@@ -5,15 +7,15 @@ pull-models:
 	ollama pull all-minilm
 
 setup:
-	pyenv install --skip-existing 3.12.12
+	poetry env use $$(pyenv which python$(PYTHON_VERSION))
 	poetry install
 
 build-llama-server:
-	poetry run pip install llama-stack
+	.venv/bin/pip install llama-stack
 	.venv/bin/llama stack build --config configs/build.yaml --image-type venv --image-name .llama-server
 
 run-llama-server:
 	.llama-server/bin/llama stack run configs/local-config.yaml
 
 run-service:
-	poetry run python app/service.py
+	.venv/bin/python app/service.py
