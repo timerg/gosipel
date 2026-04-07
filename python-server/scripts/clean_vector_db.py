@@ -19,28 +19,43 @@ from pathlib import Path
 from llama_stack_client import LlamaStackClient
 
 SERVER_URL = os.environ.get("SERVER_URL", "http://localhost:8321")
-FAISS_STORE_DB = Path.home() / ".llama/distributions/llamastack-NewLlamaStack/faiss_store.db"
+DISTRO_DIR = Path.home() / ".llama/distributions/llamastack-NewLlamaStack"
 
 
 def main(config: dict, docs_dir: str = "docs", hard: bool = False):
-    vector_db_id = config["vector_db_id"]
+    vector_db_name = config["vector_db_id"]
+    manifest_path = Path(docs_dir) / ".index_manifest.json"
+
+    # Read vector_store_id from manifest (server-assigned ID)
+    vector_store_id = None
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text())
+            vector_store_id = manifest.get("vector_store_id")
+        except Exception:
+            pass
 
     if not hard:
-        with LlamaStackClient(base_url=SERVER_URL) as client:
-            try:
-                client.vector_dbs.unregister(vector_db_id=vector_db_id)
-                print(f"Deleted vector DB '{vector_db_id}'.")
-            except Exception as e:
-                if "not found" in str(e).lower():
-                    print(f"Vector DB '{vector_db_id}' not found — nothing to delete.")
-                else:
-                    raise
-    else:
-        if FAISS_STORE_DB.exists():
-            FAISS_STORE_DB.unlink()
-            print(f"Deleted {FAISS_STORE_DB}")
+        if not vector_store_id:
+            print(f"No vector store ID found in manifest for '{vector_db_name}' — nothing to delete.")
         else:
-            print(f"faiss_store.db not found at {FAISS_STORE_DB} — nothing to delete.")
+            with LlamaStackClient(base_url=SERVER_URL) as client:
+                try:
+                    client.vector_stores.delete(vector_store_id=vector_store_id)
+                    print(f"Deleted vector store '{vector_db_name}' (id={vector_store_id}).")
+                except Exception as e:
+                    if "not found" in str(e).lower():
+                        print(f"Vector store '{vector_store_id}' not found on server — may already be deleted.")
+                    else:
+                        raise
+    else:
+        for db_file in ["kvstore.db", "sql_store.db"]:
+            path = DISTRO_DIR / db_file
+            if path.exists():
+                path.unlink()
+                print(f"Deleted {path}")
+            else:
+                print(f"{db_file} not found at {path} — skipping.")
 
     manifest_path = Path(docs_dir) / ".index_manifest.json"
     if manifest_path.exists():

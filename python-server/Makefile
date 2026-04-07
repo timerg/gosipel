@@ -19,3 +19,9 @@ run-llama-server:
 
 run-service:
 	.venv/bin/python app/service.py
+
+index-documents:
+	.venv/bin/python scripts/index_documents.py
+
+clean-vector-db:
+	.venv/bin/python scripts/clean_vector_db.py

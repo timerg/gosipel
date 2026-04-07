@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from llama_stack_client import LlamaStackClient
+from llama_stack_client.types.vector_io_insert_params import Chunk
 
 SERVER_URL = os.environ.get("SERVER_URL", "http://localhost:8321")
 
@@ -126,9 +127,9 @@ class ChunkingError(Exception):
         self.original_error = error
 
 
-def insert_chunks(client: LlamaStackClient, vector_db_id: str, chunk_objects: list[dict], batch_size: int, start_from: int = 0):
+def insert_chunks(client: LlamaStackClient, vector_store_id: str, chunk_objects: list[Chunk], embedding_model: str, batch_size: int, start_from: int = 0):
     total_batches = -(-len(chunk_objects) // batch_size)
-    print(f"    inserting {len(chunk_objects)} chunk(s) into vector DB '{vector_db_id}'" + (f" (resuming from chunk {start_from})" if start_from else ""))
+    print(f"    inserting {len(chunk_objects)} chunk(s) into vector store '{vector_store_id}'" + (f" (resuming from chunk {start_from})" if start_from else ""))
 
     # Defer Ctrl+C to between batches so we never interrupt a FAISS write mid-flight.
     interrupted = False
@@ -147,11 +148,20 @@ def insert_chunks(client: LlamaStackClient, vector_db_id: str, chunk_objects: li
             if interrupted:
                 raise ChunkingError(KeyboardInterrupt(), chunk_index=i)
             batch_num = i // batch_size + 1
-            print(f"    inserting batch {batch_num}/{total_batches}...")
             batch = chunk_objects[i:i + batch_size]
+
+            print(f"    embedding batch {batch_num}/{total_batches}...")
+            embeddings_response = client.embeddings.create(
+                input=[chunk["content"] for chunk in batch],
+                model=embedding_model,
+            )
+            for chunk, data in zip(batch, embeddings_response.data):
+                chunk["embedding"] = data.embedding
+
+            print(f"    inserting batch {batch_num}/{total_batches}...")
             client.vector_io.insert(
-                vector_db_id=vector_db_id,
-                chunks=batch
+                vector_store_id=vector_store_id,
+                chunks=batch,
             )
             print(f"    inserted batch {batch_num}/{total_batches}")
     except ChunkingError:
@@ -175,8 +185,7 @@ def main(config: dict, docs_dir: str = "docs", override: bool = False):
 
     Args:
         config: RAG configuration dict with keys:
-                vector_db_id, embedding_model, embedding_dimension,
-                chunk_size, chunk_overlap
+                vector_db_id, embedding_model, chunk_size, chunk_overlap
         docs_dir: Path to the folder containing documents to index.
         override: If True, re-index all documents even if they are in the manifest.
     """
@@ -201,23 +210,25 @@ def main(config: dict, docs_dir: str = "docs", override: bool = False):
         print(f"No documents found in {docs_path.resolve()}")
         sys.exit(0)
 
-    with LlamaStackClient(base_url=SERVER_URL) as client:
-        # Register vector DB (idempotent)
-        try:
-            client.vector_dbs.register(
-                vector_db_id=vector_db_id,
-                embedding_model=embedding_model,
-                embedding_dimension=embedding_dimension,
-                provider_id="faiss",
-            )
-            print(f"Vector DB '{vector_db_id}' registered.")
-        except Exception as e:
-            if "already" in str(e).lower() or "exists" in str(e).lower():
-                print(f"Vector DB '{vector_db_id}' already registered.")
-            else:
-                raise
+    manifest = _load_manifest(docs_path)
 
-        manifest = _load_manifest(docs_path)
+    with LlamaStackClient(base_url=SERVER_URL) as client:
+        # Find or create vector store (idempotent by name)
+        vector_store_id = manifest.get("vector_store_id")
+        if vector_store_id:
+            print(f"Reusing vector store '{vector_db_id}' (id={vector_store_id})")
+        else:
+            existing = next((s for s in client.vector_stores.list() if s.name == vector_db_id), None)
+            if existing:
+                vector_store_id = existing.id
+                print(f"Found existing vector store '{vector_db_id}' (id={vector_store_id})")
+            else:
+                store = client.vector_stores.create(name=vector_db_id)
+                vector_store_id = store.id
+                print(f"Created vector store '{vector_db_id}' (id={vector_store_id})")
+            manifest["vector_store_id"] = vector_store_id
+            _save_manifest(docs_path, manifest)
+
         total_chunks = 0
         indexed_files = 0
 
@@ -247,11 +258,15 @@ def main(config: dict, docs_dir: str = "docs", override: bool = False):
             if not chunks:
                 continue
 
-            chunk_objects = [
+            chunk_objects: list[Chunk] = [
                 {
+                    "chunk_id": f"{file_path.name}_{i}",
                     "content": chunk,
+                    "embedding_model": embedding_model,
+                    "embedding_dimension": embedding_dimension,
+                    "chunk_metadata": {},
                     "metadata": {
-                        "document_id": f"{file_path.stem}_{i}",
+                        "document_id": f"{file_path.name}_{i}",
                         "source": file_path.name,
                     },
                 }
@@ -267,7 +282,14 @@ def main(config: dict, docs_dir: str = "docs", override: bool = False):
 
 
             try:
-                insert_chunks(client, vector_db_id, chunk_objects, batch_size, start_from=start_from)
+                insert_chunks(
+                    client,
+                    vector_store_id,
+                    chunk_objects,
+                    embedding_model,
+                    batch_size,
+                    start_from=start_from
+                )
 
             except ChunkingError as e:
                 manifest[file_path.name] = {

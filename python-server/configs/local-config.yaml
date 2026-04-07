@@ -83,5 +83,10 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
+vector_stores:
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: ollama
+    model_id: all-minilm
 server:
   port: 8321
