@@ -23,5 +23,10 @@ run-service:
 index-documents:
 	.venv/bin/python scripts/index_documents.py
 
+.PHONY: clean-agents-and-traces
+clean-agents-and-traces:
+	.venv/bin/python scripts/clean_agents.py --traces
+
+.PHONY: clean-vector-db
 clean-vector-db:
 	.venv/bin/python scripts/clean_vector_db.py
